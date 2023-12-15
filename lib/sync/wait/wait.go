@@ -1,3 +1,5 @@
+// 为等待组添加超时功能
+
 package wait
 
 import (

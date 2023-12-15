@@ -1,3 +1,5 @@
+// 添加 bool 类型的 atomic 操作
+
 package atomic
 
 import "sync/atomic"
