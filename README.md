@@ -1,7 +1,8 @@
 # 建设中 ... ⛏
 ## 实现 TCP 服务器
 基于net包开发TCP服务器，可以同时处理多个客户端的连接、通信、正常/异常结束
-## Redis 背景知识
+
+## 实现 Redis 协议解析器
 Redis 网络协议，**REdis SeriaIization ProtocoI (RESP)** ：
 
 * 正常回复（Redis → Client）
@@ -22,7 +23,6 @@ Redis 网络协议，**REdis SeriaIization ProtocoI (RESP)** ：
     * 以 "*" 开头，后跟成员个数
     * 有3个成员的数组 [SET, key, value]：`*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n` 
  
-## 实现 Redis 协议解析器
 
 ## 实现内存数据库
 
