@@ -1,4 +1,4 @@
-// Package redis_go -----------------------------
+// Package main -----------------------------
 // @file      : main.go
 // @author    : hcjjj
 // @contact   : hcjjj@foxmail.com
