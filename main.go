@@ -11,7 +11,6 @@ import (
 	"os"
 	"redis-go/config"
 	"redis-go/lib/logger"
-	"redis-go/resp/handler"
 	"redis-go/tcp"
 )
 
@@ -44,8 +43,8 @@ func main() {
 	err := tcp.ListenAndServeWithSignal(&tcp.Config{
 		Address: fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port),
 	},
-		//tcp.MakeHandler())
-		handler.MakeHandler())
+		tcp.MakeHandler())
+	//handler.MakeHandler())
 	if err != nil {
 		logger.Error(err)
 	}

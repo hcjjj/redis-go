@@ -40,7 +40,17 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("start listen")
+	logger.Info("Start listen")
+	logger.Info(
+		"\n" +
+			"                _ _                       \n" +
+			"               | (_)                      \n" +
+			"   _ __ ___  __| |_ ___ ______ __ _  ___  \n" +
+			"  | '__/ _ \\/ _` | / __|______/ _` |/ _ \\ \n" +
+			"  | | |  __/ (_| | \\__ \\     | (_| | (_) |\n" +
+			"  |_|  \\___|\\__,_|_|___/      \\__, |\\___/ \n" +
+			"                               __/ |      \n" +
+			"                              |___/       \n")
 	ListenAndServer(listen, handler, closeChan)
 	return nil
 }
@@ -49,7 +59,7 @@ func ListenAndServer(listener net.Listener, handler tcp.Handler, closeChan <-cha
 	// 监听应用程序被关闭的系统信号
 	go func() {
 		<-closeChan
-		logger.Info("shutting down")
+		logger.Info("Shutting down")
 		_ = listener.Close()
 		_ = handler.Close()
 	}()
@@ -65,7 +75,7 @@ func ListenAndServer(listener net.Listener, handler tcp.Handler, closeChan <-cha
 		if err != nil {
 			break
 		}
-		logger.Info("accepted link")
+		logger.Info("Accepted link: " + conn.RemoteAddr().String())
 		waitDone.Add(1)
 		go func() {
 			// 防止连接出现 panic 导致没 Done()

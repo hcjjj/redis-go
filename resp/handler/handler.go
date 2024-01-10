@@ -63,7 +63,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 				payload.Err == io.ErrUnexpectedEOF ||
 				strings.Contains(payload.Err.Error(), "use of closed network connection") {
 				r.closeClient(client)
-				logger.Info("connection closed: " + client.RemoteAddr().String())
+				logger.Info("Connection closed: " + client.RemoteAddr().String())
 				return
 			}
 			// protocol error
@@ -71,7 +71,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			err := client.Write(errReply.ToBytes())
 			if err != nil {
 				r.closeClient(client)
-				logger.Info("connection closed: " + client.RemoteAddr().String())
+				logger.Info("Connection closed: " + client.RemoteAddr().String())
 				return
 			}
 			continue
