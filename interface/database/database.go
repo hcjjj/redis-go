@@ -16,6 +16,7 @@ type Database interface {
 	AfterClientClose(c resp.Connection)
 }
 
+// DataEntity 指代 Redis 所有数据结构
 type DataEntity struct {
 	Data interface{}
 }
