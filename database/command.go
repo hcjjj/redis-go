@@ -8,6 +8,7 @@ package database
 
 import "strings"
 
+// 支持的 指令表
 var cmdTable = make(map[string]*command)
 
 type command struct {
