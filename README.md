@@ -56,18 +56,14 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
 ## 代码文件总览
 
 0. 项目基础配置
-
   * config
   * lib/logger 日志记录
   * lib/sync 同步工具
   * lib/wildcard 通配符
   * lib/utils 格式转换工具
 1. 实现 TCP 服务器
-
   * interface/tcp
-
   * tcp/server.go 管理对多个客户端的连接
-
   * tcp/echo.go 回发的TCP层测试
 2. 实现 Redis 协议解析器
   * interface/resp

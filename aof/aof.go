@@ -51,6 +51,7 @@ func NewAOFHandler(db database.Database) (*AofHandler, error) {
 	handler.aofFile = aofFile
 	// channel缓冲
 	handler.aofChan = make(chan *payload, aofQueueSize)
+	// 异步的
 	go func() {
 		handler.handleAof()
 	}()
@@ -78,6 +79,7 @@ func (handler *AofHandler) handleAof() {
 		if p.dbIndex != handler.currentDB {
 			// 不一致 插入 select db
 			data := reply.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(p.dbIndex))).ToBytes()
+			// 写入文件
 			_, err := handler.aofFile.Write(data)
 			if err != nil {
 				logger.Warn(err)
@@ -95,35 +97,5 @@ func (handler *AofHandler) handleAof() {
 
 // LoadAof read aof file
 func (handler *AofHandler) LoadAof() {
-	//
-	//file, err := os.Open(handler.aofFilename)
-	//if err != nil {
-	//	logger.Warn(err)
-	//	return
-	//}
-	//defer file.Close()
-	//ch := parser.ParseStream(file)
-	//fakeConn := &connection.Connection{} // only used for save dbIndex
-	//for p := range ch {
-	//	if p.Err != nil {
-	//		if p.Err == io.EOF {
-	//			break
-	//		}
-	//		logger.Error("parse error: " + p.Err.Error())
-	//		continue
-	//	}
-	//	if p.Data == nil {
-	//		logger.Error("empty payload")
-	//		continue
-	//	}
-	//	r, ok := p.Data.(*reply.MultiBulkReply)
-	//	if !ok {
-	//		logger.Error("require multi bulk reply")
-	//		continue
-	//	}
-	//	ret := handler.db.Exec(fakeConn, r.Args)
-	//	if reply.IsErrorReply(ret) {
-	//		logger.Error("exec err", err)
-	//	}
-	//}
+
 }

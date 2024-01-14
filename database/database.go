@@ -7,6 +7,7 @@
 package database
 
 import (
+	"redis-go/aof"
 	"redis-go/config"
 	"redis-go/interface/resp"
 	"redis-go/lib/logger"
@@ -16,7 +17,8 @@ import (
 )
 
 type Database struct {
-	dbSet []*DB
+	dbSet      []*DB
+	aofHandler *aof.AofHandler
 }
 
 // NewDatabase 创建 Redis 数据库的核心 默认为16个分数据库
