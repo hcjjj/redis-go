@@ -15,8 +15,9 @@ import (
 )
 
 type DB struct {
-	index int
-	data  dict.Dict
+	index  int
+	data   dict.Dict
+	addAof func(line CmdLine)
 }
 
 type ExecFunc func(db *DB, args [][]byte) resp.Reply
@@ -25,6 +26,8 @@ type CmdLine = [][]byte
 func makeDB() *DB {
 	db := &DB{
 		data: dict.MakeSyncDict(),
+		// 必须初始化，防止第一次运行出现错误
+		addAof: func(line CmdLine) {},
 	}
 	return db
 }

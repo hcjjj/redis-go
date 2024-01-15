@@ -192,6 +192,8 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 
 // *3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
 // 3 SET key value
+// *2\r\n$6\r\nselect\r\n$1\r\n1\r\n
+// select 1
 func parseMultiBulkHeader(msg []byte, state *readState) error {
 	var err error
 	// 取 * 后面的数字，表示成员个数

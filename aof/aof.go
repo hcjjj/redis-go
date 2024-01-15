@@ -9,7 +9,7 @@ package aof
 import (
 	"os"
 	"redis-go/config"
-	"redis-go/database"
+	"redis-go/interface/database"
 	"redis-go/lib/logger"
 	"redis-go/lib/utils"
 	"redis-go/resp/reply"
@@ -37,8 +37,8 @@ type AofHandler struct {
 	currentDB   int           // 记录上一条指令工作的 db
 }
 
-// NewAOFHandler creates a new aof.AofHandler
-func NewAOFHandler(db database.Database) (*AofHandler, error) {
+// NewAofHandler creates a new aof.AofHandler
+func NewAofHandler(db database.Database) (*AofHandler, error) {
 	handler := &AofHandler{}
 	handler.aofFilename = config.Properties.AppendFilename
 	handler.database = db
@@ -78,7 +78,7 @@ func (handler *AofHandler) handleAof() {
 	for p := range handler.aofChan {
 		if p.dbIndex != handler.currentDB {
 			// 不一致 插入 select db
-			data := reply.MakeMultiBulkReply(utils.ToCmdLine("SELECT", strconv.Itoa(p.dbIndex))).ToBytes()
+			data := reply.MakeMultiBulkReply(utils.ToCmdLine("select", strconv.Itoa(p.dbIndex))).ToBytes()
 			// 写入文件
 			_, err := handler.aofFile.Write(data)
 			if err != nil {

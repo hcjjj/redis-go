@@ -5,7 +5,7 @@
 
 **Tips：**
 
-* Goland 中 `ctrl + i ` 快捷实现的接口
+* Goland 中 选中结构体 `ctrl + i ` 快捷实现的接口
 
 ## 实现 Redis 协议解析器
 
@@ -45,6 +45,7 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
 ## 实现 Redis 集群
 
 
+
 ## 问题记录
 
 * 问题一
@@ -55,30 +56,30 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
 
 ## 代码文件总览
 
-0. 项目基础配置
+* 项目基础配置
   * config
   * lib/logger 日志记录
   * lib/sync 同步工具
   * lib/wildcard 通配符
   * lib/utils 格式转换工具
-1. 实现 TCP 服务器
+* 实现 TCP 服务器
   * interface/tcp
   * tcp/server.go 管理对多个客户端的连接
   * tcp/echo.go 回发的TCP层测试
-2. 实现 Redis 协议解析器
+* 实现 Redis 协议解析器
   * interface/resp
   * resp/reply 定义服务端对客户端静态/动态回复
   * resp/parser 对客户端发来的字节数据进行解析
   * resp/connection 处理客户端的请求（发送数据）
   * resp/handler 处理客户端的请求（解析数据为指令）
   * database/echo_database.go 回发的内核层测试
-3. 实现内存数据库
+* 实现内存数据库
   * datastruct 定义 Redis 底层数据结构的接口与实现
   * datastruct/sync_dict 对底层并发map的包装，方便更换实现
   * database/db.go 定义分数据库、底层执行逻辑
   * database/command.go 注册命令的方法
   * database/keys.go ping.go string.go 实现相关命令
-4. 实现 Redis 持久化
+* 实现 Redis 持久化
   * Append Only File
   * aof/aof.go
-5. 实现 Redis 集群
+* 实现 Redis 集群
