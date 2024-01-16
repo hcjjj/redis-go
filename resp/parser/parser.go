@@ -9,7 +9,6 @@ package parser
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"redis-go/interface/resp"
 	"redis-go/lib/logger"
@@ -84,13 +83,13 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 		// $3\r\n
 		//...
 		if !state.readingMultiLine {
-			fmt.Printf("%s", string(msg))
+			//fmt.Printf("%s", string(msg))
 			// *3/r/n
 			if msg[0] == '*' { //*3
 				err := parseMultiBulkHeader(msg, &state)
 				if err != nil {
 					ch <- &Payload{
-						Err: errors.New("protocol error telnet: " + string(msg)),
+						Err: errors.New("protocol error [telnet?]: " + string(msg)),
 					}
 					state = readState{}
 					continue

@@ -7,11 +7,14 @@
 package aof
 
 import (
+	"io"
 	"os"
 	"redis-go/config"
 	"redis-go/interface/database"
 	"redis-go/lib/logger"
 	"redis-go/lib/utils"
+	"redis-go/resp/connection"
+	"redis-go/resp/parser"
 	"redis-go/resp/reply"
 	"strconv"
 )
@@ -44,6 +47,7 @@ func NewAofHandler(db database.Database) (*AofHandler, error) {
 	handler.database = db
 	//加载已有的数据
 	handler.LoadAof()
+	// 打开后就一直要用的
 	aofFile, err := os.OpenFile(handler.aofFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600) //读写方式打开文件
 	if err != nil {
 		return nil, err
@@ -97,5 +101,39 @@ func (handler *AofHandler) handleAof() {
 
 // LoadAof read aof file
 func (handler *AofHandler) LoadAof() {
+	logger.Info("LoadAof read aof file: " + handler.aofFilename)
+	// 打开文件 只读方式打开文件
+	file, err := os.Open(handler.aofFilename)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer file.Close()
+	// file 实现了 reader 接口
+	ch := parser.ParseStream(file)
+	fakeConn := &connection.Connection{}
+	for p := range ch {
+		if p.Err != nil {
+			// 文件结束符
+			if p.Err == io.EOF {
+				break
+			}
+			logger.Error(err)
+			continue
+		}
+		if p.Data == nil {
+			logger.Error("empty payload")
+			continue
+		}
+		// 类型断言
+		r, ok := p.Data.(*reply.MultiBulkReply)
+		if !ok {
+			logger.Error("need multi bulk")
 
+		}
+		rep := handler.database.Exec(fakeConn, r.Args)
+		if reply.IsErrReply(rep) {
+			logger.Error(rep)
+		}
+	}
 }
