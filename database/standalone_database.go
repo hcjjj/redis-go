@@ -1,5 +1,5 @@
 // Package database -----------------------------
-// @file      : database.go
+// @file      : standalone_database.go
 // @author    : hcjjj
 // @contact   : hcjjj@foxmail.com
 // @time      : 2024/1/13 21:10
@@ -16,14 +16,14 @@ import (
 	"strings"
 )
 
-type Database struct {
+type StandaloneDatabase struct {
 	dbSet      []*DB
 	aofHandler *aof.AofHandler
 }
 
-// NewDatabase 创建 Redis 数据库的核心 默认为16个分数据库
-func NewDatabase() *Database {
-	database := &Database{}
+// NewStandaloneDatabase 创建 Redis 数据库的核心 默认为16个分数据库
+func NewStandaloneDatabase() *StandaloneDatabase {
+	database := &StandaloneDatabase{}
 	if config.Properties.Databases == 0 {
 		config.Properties.Databases = 16
 	}
@@ -69,7 +69,7 @@ func NewDatabase() *Database {
 // get k
 // select 2
 
-func (database *Database) Exec(client resp.Connection, args [][]byte) resp.Reply {
+func (database *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -91,18 +91,18 @@ func (database *Database) Exec(client resp.Connection, args [][]byte) resp.Reply
 
 }
 
-func (database *Database) Close() {
+func (database *StandaloneDatabase) Close() {
 
 }
 
-func (database *Database) AfterClientClose(c resp.Connection) {
+func (database *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 
 }
 
 // select 2
 // select a
 // select 123123131231
-func execSelect(c resp.Connection, database *Database, args [][]byte) resp.Reply {
+func execSelect(c resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {
 		return reply.MakeErrReply("ERR invalid DB index")
