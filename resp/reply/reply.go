@@ -106,6 +106,10 @@ type StandardErrReply struct {
 	Status string
 }
 
+func (r *StandardErrReply) Error() string {
+	return r.Status
+}
+
 func (r *StandardErrReply) ToBytes() []byte {
 	return []byte("-" + r.Status + CRLF)
 }

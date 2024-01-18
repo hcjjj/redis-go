@@ -10,6 +10,8 @@ import (
 	"context"
 	"io"
 	"net"
+	"redis-go/cluster"
+	"redis-go/config"
 	"redis-go/database"
 	databseinterface "redis-go/interface/database"
 	"redis-go/lib/logger"
@@ -34,7 +36,13 @@ type RespHandler struct {
 func MakeHandler() *RespHandler {
 	var db databseinterface.Database
 	//db = database.NewEchoDatabase()
-	db = database.NewStandaloneDatabase()
+	//db = database.NewStandaloneDatabase()
+	// 判断是否启动集群版
+	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+		db = cluster.MakeClusterDatabase()
+	} else {
+		db = database.NewStandaloneDatabase()
+	}
 	return &RespHandler{
 		db: db,
 	}

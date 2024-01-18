@@ -13,6 +13,9 @@ import (
 	"redis-go/interface/database"
 	"redis-go/interface/resp"
 	"redis-go/lib/consistenthash"
+	"redis-go/lib/logger"
+	"redis-go/resp/reply"
+	"strings"
 
 	pool "github.com/jolestar/go-commons-pool/v2"
 )
@@ -48,7 +51,7 @@ func MakeClusterDatabase() *ClusterDatabase {
 	cluster.peerPicker.AddNode(nodes...)
 	ctx := context.Background()
 	for _, peer := range config.Properties.Peers {
-		pool.NewObjectPoolWithDefaultConfig(ctx, &connectionFactory{
+		cluster.peerConnection[peer] = pool.NewObjectPoolWithDefaultConfig(ctx, &connectionFactory{
 			Peer: peer,
 		})
 	}
@@ -57,17 +60,33 @@ func MakeClusterDatabase() *ClusterDatabase {
 
 }
 
-func (c *ClusterDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
-	//TODO implement me
-	panic("implement me")
+type CmdFunc func(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply
+
+var router = makeRouter()
+
+func (cluster *ClusterDatabase) Exec(client resp.Connection, args [][]byte) (result resp.Reply) {
+	// 集群层的执行替代单机版的执行
+
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(err)
+			result = &reply.UnknowErrReply{}
+		}
+	}()
+
+	cmdName := strings.ToLower(string(args[0]))
+	cmdFunc, ok := router[cmdName]
+	if !ok {
+		reply.MakeErrReply("not supported cmd")
+	}
+	result = cmdFunc(cluster, client, args)
+	return result
 }
 
-func (c *ClusterDatabase) Close() {
-	//TODO implement me
-	panic("implement me")
+func (cluster *ClusterDatabase) Close() {
+	cluster.db.Close()
 }
 
-func (c *ClusterDatabase) AfterClientClose(resp.Connection) {
-	//TODO implement me
-	panic("implement me")
+func (cluster *ClusterDatabase) AfterClientClose(c resp.Connection) {
+	cluster.db.AfterClientClose(c)
 }
