@@ -33,26 +33,31 @@ Redis 网络协议，**REdis SeriaIization ProtocoI (RESP)** ：
 
 KV 内存数据库的核心是并发安全的哈希表 **sync.map**
 
-测试：
-
-* `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
-* `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
-
 ## 实现 Redis 持久化
 
 AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 channel 将数据发送到异步协程由异步协程执行持久化操作
 
 ## 实现 Redis 集群
 
+单台服务器的CPU和内存等资源是有限的，利用多台机器建立分布式系统，分工处理来提高系统容量和吞吐量
 
+## 测试命令
+
+* set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
+* select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
+* get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
 
 ## 问题记录
 
 * 问题一
   * 当客户端主动断开连接的时候服务器报错，`panic: sync: negative WaitGroup counter`
-  * 原因：`waitDone.Add(1)` 不小心写成 `waitDone.Add(0)`，导致后续的 `waitDone.Done()` 出现 panic
+  * `waitDone.Add(1)` 不小心写成 `waitDone.Add(0)`，导致后续的 `waitDone.Done()` 出现 panic
 * 问题二
-  *
+  * `imports redis-go/database: import cycle not allowed`
+  * aof.go 文件导包错误，需要的是 "redis-go/interface/database"，而不是 "redis-go/database"
+* 问题三
+  * `[ERROR][database.go:76] runtime error: index out of range [1] with length 1`
+  * execSelect 方法中的 `strconv.Atoi(string(args[0]))` 写成了 1
 
 ## 代码文件总览
 
@@ -74,12 +79,22 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
   * resp/handler 处理客户端的请求（解析数据为指令）
   * database/echo_database.go 回发的内核层测试
 * 实现内存数据库
-  * datastruct 定义 Redis 底层数据结构的接口与实现
+  * datastruct/database.go 数据库核心，定义 Redis 底层数据结构的接口与实现
   * datastruct/sync_dict 对底层并发map的包装，方便更换实现
   * database/db.go 定义分数据库、底层执行逻辑
   * database/command.go 注册命令的方法
-  * database/keys.go ping.go string.go 实现相关命令
+  * database/keys.go ping.go string.go ... 实现相关命令
 * 实现 Redis 持久化
   * Append Only File
-  * aof/aof.go
+  * aof/aof.go 实现指令落盘和加载恢复数据
 * 实现 Redis 集群
+  * 一致性哈希（减少传统哈希增加节点时数据哈希存储不一致调整的开销）
+  * lib/consistenthash 一致性哈希
+  * cluster/cluster_database.go 集群
+  * resp/client 客户端
+  * go-commos-pool 开源连接池工具
+  * cluster/client_pool.go 连接工厂，给连接池用的
+  * cluster/com.go 节点之间的通信
+  * cluster/router.go 指令路由
+  * `go build` 生成 exe
+  * `go mod tidy`  整理依赖
