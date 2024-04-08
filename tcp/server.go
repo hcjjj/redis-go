@@ -36,11 +36,11 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 		}
 	}()
 
-	listen, err := net.Listen("tcp", cfg.Address)
+	listener, err := net.Listen("tcp", cfg.Address)
 	if err != nil {
 		return err
 	}
-	logger.Info("Start listen")
+	logger.Info("Start listen ...")
 	logger.Info(
 		"\n" +
 			"                _ _                       \n" +
@@ -51,7 +51,7 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 			"  |_|  \\___|\\__,_|_|___/      \\__, |\\___/ \n" +
 			"                               __/ |      \n" +
 			"                              |___/       \n")
-	ListenAndServer(listen, handler, closeChan)
+	ListenAndServer(listener, handler, closeChan)
 	return nil
 }
 

@@ -20,7 +20,7 @@ import (
 
 type EchoClient struct {
 	Conn net.Conn
-	// 用自己包装的 WaitGroup
+	// 用自己包装的 WaitGroup 加入超时的功能
 	Waiting wait.Wait
 }
 
@@ -32,8 +32,10 @@ func (e *EchoClient) Close() error {
 }
 
 type EchoHandler struct {
+	// 记录有多个连接
 	activeConn sync.Map
 	// × closing boll 防止并发问题
+	// 原子的 bool
 	closing atomic.Boolean
 }
 
@@ -46,7 +48,7 @@ func (handler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 	if handler.closing.Get() {
 		_ = conn.Close()
 	}
-	// 包装为自己定义的
+	// 包装为自己定义的，代表一个连接上来的客户端
 	client := &EchoClient{
 		Conn: conn,
 	}
@@ -69,6 +71,7 @@ func (handler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 		client.Waiting.Add(1)
 		b := []byte(msg)
 		_, _ = conn.Write(b)
+		// 业务结束
 		client.Waiting.Done()
 	}
 }
@@ -76,9 +79,11 @@ func (handler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 func (handler *EchoHandler) Close() error {
 	logger.Info("handler shutting down")
 	handler.closing.Set(true)
+	// sync 包下的 map 不一样
 	handler.activeConn.Range(func(key, value interface{}) bool {
-		// 空接口转换为 EchoClient
+		// 将空接口转换为 EchoClient
 		client := key.(*EchoClient)
+		// 对每个客户端都进行关闭连接的操作
 		_ = client.Conn.Close()
 		// 表示方法施加到所有 key value
 		return true
