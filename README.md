@@ -1,13 +1,8 @@
-# 建设中 ... ⛏
 ## 项目介绍
 
-使用 Go 语言基于 Redis serialization protocol (RESP) 实现简易的 Redis，主要工作如下：
+使用 Go 语言基于 Redis serialization protocol (RESP) 实现简易的 Redis
 
-* TCP 服务器
-* Redis 协议解析器
-* 内存数据库
-* Redis 持久化
-* Redis 集群
+> 主要工作：TCP 服务器、Redis 协议解析器、内存数据库、Redis 持久化、Redis 集群
 
 ## 运行方式
 
@@ -29,43 +24,7 @@ redis-cli -h 127.0.0.1
 
 ```
 
-## 测试命令
-
-* set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
-* select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
-* get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
-
 ## 实现逻辑
-
-### 目录结构
-
-```shell
-├── aof # AOF 持久化
-├── cluster # 集群
-├── config # 解析配置文件 redis.conf
-├── database # 内存数据库
-├── datastruct # 支持的数据结构
-│   └── dict
-├── interface # 接口定义
-│   ├── database
-│   ├── resp
-│   └── tcp
-├── lib # 基础工具
-│   ├── consistenthash # 一致性哈希
-│   ├── logger # 日志记录
-│   ├── sync # 同步工具
-│   │   ├── atomic
-│   │   └── wait
-│   ├── utils # 格式转换
-│   └── wildcard # 通配符
-├── resp # RESP 协议
-│   ├── client
-│   ├── connection
-│   ├── handler
-│   ├── parser
-│   └── reply
-└── tcp # TCP 服务器
-```
 
 ### TCP 服务器
 
@@ -105,3 +64,39 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
 ### Redis 集群
 
 单台服务器的CPU和内存等资源是有限的，利用多台机器建立分布式系统，分工处理来提高系统容量和吞吐量
+
+### 目录结构
+
+```shell
+├── aof # AOF 持久化
+├── cluster # 集群
+├── config # 解析配置文件 redis.conf
+├── database # 内存数据库
+├── datastruct # 支持的数据结构
+│   └── dict
+├── interface # 接口定义
+│   ├── database
+│   ├── resp
+│   └── tcp
+├── lib # 基础工具
+│   ├── consistenthash # 一致性哈希
+│   ├── logger # 日志记录
+│   ├── sync # 同步工具
+│   │   ├── atomic
+│   │   └── wait
+│   ├── utils # 格式转换
+│   └── wildcard # 通配符
+├── resp # RESP 协议
+│   ├── client
+│   ├── connection
+│   ├── handler
+│   ├── parser
+│   └── reply
+└── tcp # TCP 服务器
+```
+
+## 测试命令
+
+* set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
+* select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
+* get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
