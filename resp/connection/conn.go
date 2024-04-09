@@ -14,10 +14,14 @@ import (
 )
 
 type Connection struct {
-	conn         net.Conn
+	// TCP 连接信息
+	conn net.Conn
+	// 关闭服务器之前需要将还没处理的命令处理完
 	waitingReply wait.Wait
-	mu           sync.Mutex
-	selectedDB   int
+	// 避免并发问题
+	mu sync.Mutex
+	// 选择哪个 db
+	selectedDB int
 }
 
 func NewConn(conn net.Conn) *Connection {
