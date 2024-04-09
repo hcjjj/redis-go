@@ -2,7 +2,7 @@
 
 使用 Go 语言基于 Redis serialization protocol (RESP) 实现简易的 Redis
 
-> 主要工作：TCP 服务器、Redis 协议解析器、内存数据库、Redis 持久化、Redis 集群
+主要工作：TCP 服务器、Redis 协议解析器、内存数据库、Redis 持久化、Redis 集群
 
 ## 运行方式
 
@@ -12,9 +12,8 @@
 # 服务器
 go build main.go
 ./main
-# 客户端 telnet
+# 客户端 telnet 或 redis-cli
 telnet 127.0.0.1 6379
-# redis-cli
 redis-cli -h 127.0.0.1
 ```
 
@@ -34,11 +33,15 @@ redis-cli -h 127.0.0.1
 
 ### Redis 协议解析器
 
-Redis 网络协议，**REdis SeriaIization ProtocoI (RESP)** ：
-* 正常回复（Redis ⇄ Client）
+**解析客户端数据：**
+
+**封装服务器数据：**
+
+Redis 网络协议，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
+* 正常回复（Redis → Client）
   * 以 "+" 开头，以 "\r\n" 结尾的字符串形式
   * 如：`+OK\r\n`
-* 错误回复（Redis ⇄ Client）
+* 错误回复（Redis → Client）
   * 以 "-" 开头，以 "\r\n" 结尾的字符串形式
   * 如：`-Error message\r\n`
 * 整数（Redis ⇄ Client）
@@ -49,7 +52,7 @@ Redis 网络协议，**REdis SeriaIization ProtocoI (RESP)** ：
   * "Redis"：`$5\r\nRedis\r\n`
   * ""：`$0\r\n\r\n`
   * "Redis\r\ngo"：`$11\r\nRedis\r\ngo\r\n`
-* 数组（Redis ⇄ Client）
+* 多行字符串（数组）（Redis ⇄ Client）
   * 以 "*" 开头，后跟成员个数
   * 有3个成员的数组[SET, key, value]：`*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
 
@@ -86,12 +89,12 @@ AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 chann
 │   │   └── wait
 │   ├── utils # 格式转换
 │   └── wildcard # 通配符
-├── resp # RESP 协议
+├── resp # RESP 解析
 │   ├── client
 │   ├── connection
 │   ├── handler
-│   ├── parser
-│   └── reply
+│   ├── parser # 解析客户端发来的数据
+│   └── reply # 封装服务器对客户端的回复
 └── tcp # TCP 服务器
 ```
 

@@ -39,6 +39,7 @@ func main() {
 	} else {
 		config.Properties = defaultProperties
 	}
+	logger.Info(fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port))
 	// 业务
 	err := tcp.ListenAndServeWithSignal(&tcp.Config{
 		// IP:PORT

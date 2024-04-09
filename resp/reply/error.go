@@ -61,7 +61,7 @@ func (r *SyntaxErrReply) Error() string {
 // WrongTypeErrReply represents operation against a key holding the wrong kind of value
 type WrongTypeErrReply struct{}
 
-var wrongTypeErrBytes = []byte("-WRONGTYPE Operation against a key holding the wrong kind of value\r\n")
+var wrongTypeErrBytes = []byte("-WRONG TYPE Operation against a key holding the wrong kind of value\r\n")
 
 // ToBytes marshals redis.Reply
 func (r *WrongTypeErrReply) ToBytes() []byte {
@@ -69,7 +69,7 @@ func (r *WrongTypeErrReply) ToBytes() []byte {
 }
 
 func (r *WrongTypeErrReply) Error() string {
-	return "WRONGTYPE Operation against a key holding the wrong kind of value"
+	return "WRONG TYPE Operation against a key holding the wrong kind of value"
 }
 
 // ProtocolErr 协议错误

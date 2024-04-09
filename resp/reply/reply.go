@@ -23,7 +23,7 @@ type BulkReply struct {
 
 func (b *BulkReply) ToBytes() []byte {
 	if len(b.Arg) == 0 {
-		return nullBulkReplyBytes
+		return []byte(string(nullBulkReplyBytes) + CRLF)
 	}
 	// "hcjjj" → "$5\r\nhcjjj\r\n"
 	return []byte("$" + strconv.Itoa(len(b.Arg)) + CRLF + string(b.Arg) + CRLF)
@@ -42,17 +42,17 @@ type MultiBulkReply struct {
 
 func (r *MultiBulkReply) ToBytes() []byte {
 	argLen := len(r.Args)
-	// 拼接多个字符串再输出为字节
+	// 方便拼接多个字符串再输出为字节
 	var buf bytes.Buffer
 	buf.WriteString("*" + strconv.Itoa(argLen) + CRLF)
 	for _, arg := range r.Args {
 		if arg == nil {
-			// byte → string
 			buf.WriteString(string(nullBulkReplyBytes) + CRLF)
 		} else {
 			buf.WriteString("$" + strconv.Itoa(len(arg)) + CRLF + string(arg) + CRLF)
 		}
 	}
+	// string → byte
 	return buf.Bytes()
 }
 

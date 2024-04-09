@@ -52,6 +52,7 @@ func MakeNullBulkReply() *NullBulkReply {
 	return &NullBulkReply{}
 }
 
+// 空数组
 var emptyMultiBulkBytes = []byte("*0\r\n")
 
 // EmptyMultiBulkReply is an empty list
@@ -61,10 +62,20 @@ func (e EmptyMultiBulkReply) ToBytes() []byte {
 	return emptyMultiBulkBytes
 }
 
+func MakeEmptyMultiBulkReply() *EmptyMultiBulkReply {
+	return &EmptyMultiBulkReply{}
+}
+
+// 回复一个空
+
 type NoReply struct{}
 
 var noBytes = []byte("")
 
 func (n NoReply) ToBytes() []byte {
 	return noBytes
+}
+
+func MakeNoReply() *NoReply {
+	return &NoReply{}
 }
