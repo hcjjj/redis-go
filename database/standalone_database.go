@@ -8,8 +8,8 @@ package database
 
 import (
 	"redis-go/aof"
-	"redis-go/config"
 	"redis-go/interface/resp"
+	"redis-go/lib/config"
 	"redis-go/lib/logger"
 	"redis-go/resp/reply"
 	"strconv"

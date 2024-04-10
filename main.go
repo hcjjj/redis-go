@@ -9,7 +9,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"redis-go/config"
+	"redis-go/lib/config"
 	"redis-go/lib/logger"
 	"redis-go/resp/handler"
 	"redis-go/tcp"

@@ -9,8 +9,8 @@ package aof
 import (
 	"io"
 	"os"
-	"redis-go/config"
 	"redis-go/interface/database"
+	"redis-go/lib/config"
 	"redis-go/lib/logger"
 	"redis-go/lib/utils"
 	"redis-go/resp/connection"

@@ -1,3 +1,6 @@
+.gitignore
+go.sum
+/logs
 *.aof
 # Golang #
 ######################

@@ -8,10 +8,10 @@ package cluster
 
 import (
 	"context"
-	"redis-go/config"
 	database2 "redis-go/database"
 	"redis-go/interface/database"
 	"redis-go/interface/resp"
+	"redis-go/lib/config"
 	"redis-go/lib/consistenthash"
 	"redis-go/lib/logger"
 	"redis-go/resp/reply"
