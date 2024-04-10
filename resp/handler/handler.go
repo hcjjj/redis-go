@@ -100,23 +100,48 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 		// 感觉这边需要判断 data 来反应直接回复客户端还是 需要和 db 打交道
 		// 这边需要扩展~ PING 还不支持
 		// 和 db 打交到
-		//switch payload.Data.(type) {
-		//case *reply.MultiBulkReply:
-		//
-		//}
-		mReply, ok := payload.Data.(*reply.MultiBulkReply)
-		if !ok {
+		switch payload.Data.(type) {
+		case *reply.MultiBulkReply:
+			result := r.db.Exec(client, payload.Data.(*reply.MultiBulkReply).Args)
+			if result != nil {
+				// 返回执行结果给客户端
+				// ToBytes 结果再编码为 RESP 格式
+				_ = client.Write(result.ToBytes())
+			} else {
+				_ = client.Write(unknownErrReplyBytes)
+			}
+		case *reply.BulkReply:
+			cmd := payload.Data.(*reply.BulkReply).Arg
+			if strings.ToLower(string(cmd)) == "ping" {
+				args := make([][]byte, 1)
+				args[0] = cmd
+				result := r.db.Exec(client, args)
+				if result != nil {
+					// 返回执行结果给客户端
+					// ToBytes 结果再编码为 RESP 格式
+					_ = client.Write(result.ToBytes())
+				} else {
+					_ = client.Write(unknownErrReplyBytes)
+				}
+			}
+		default:
 			logger.Error("require multi bulk reply to exec")
 			continue
 		}
-		result := r.db.Exec(client, mReply.Args)
-		if result != nil {
-			// 返回执行结果给客户端
-			// ToBytes 结果再编码为 RESP 格式
-			_ = client.Write(result.ToBytes())
-		} else {
-			_ = client.Write(unknownErrReplyBytes)
-		}
+
+		//mReply, ok := payload.Data.(*reply.MultiBulkReply)
+		//if !ok {
+		//	logger.Error("require multi bulk reply to exec")
+		//	continue
+		//}
+		//result := r.db.Exec(client, mReply.Args)
+		//if result != nil {
+		//	// 返回执行结果给客户端
+		//	// ToBytes 结果再编码为 RESP 格式
+		//	_ = client.Write(result.ToBytes())
+		//} else {
+		//	_ = client.Write(unknownErrReplyBytes)
+		//}
 	}
 }
 
