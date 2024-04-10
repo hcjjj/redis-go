@@ -2,7 +2,7 @@
 
 使用 Go 语言基于 Redis serialization protocol (RESP) 实现简易的 Redis，主要工作：TCP 服务器、协议解析器、内存数据库、持久化、集群
 
-**运行：**
+**编译运行：**
 
 ```shell
 # 单机版
