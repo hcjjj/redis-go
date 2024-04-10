@@ -15,9 +15,9 @@ import (
 )
 
 type DB struct {
-	index  int
-	data   dict.Dict
-	addAof func(line CmdLine)
+	index int
+	data  dict.Dict
+	//addAof func(line CmdLine)
 }
 
 type ExecFunc func(db *DB, args [][]byte) resp.Reply
@@ -25,9 +25,10 @@ type CmdLine = [][]byte
 
 func makeDB() *DB {
 	db := &DB{
+		// 该接口用哪个实现
 		data: dict.MakeSyncDict(),
 		// 必须初始化，防止第一次运行出现错误
-		addAof: func(line CmdLine) {},
+		//addAof: func(line CmdLine) {},
 	}
 	return db
 }
@@ -49,7 +50,7 @@ func (db *DB) Exec(c resp.Connection, cmdLine CmdLine) resp.Reply {
 }
 
 // SET K V → arity = 3
-// EXISTS k1 k2 k3 ... → arity = -2
+// EXISTS k1 k2 k3 ... → arity = -2 [-最少的参数个数]
 // validateArity 判断用户发送的
 func validateArity(arity int, cmdArgs [][]byte) bool {
 	argNum := len(cmdArgs)
@@ -62,6 +63,7 @@ func validateArity(arity int, cmdArgs [][]byte) bool {
 }
 
 // 常用的公共方法
+// 再包一层为 database 的实体，套壳
 
 func (db *DB) GetEntity(key string) (*database.DataEntity, bool) {
 	raw, ok := db.data.Get(key)

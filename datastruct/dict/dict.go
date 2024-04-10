@@ -11,6 +11,7 @@ type Consumer func(key string, val interface{}) bool
 type Dict interface {
 	Get(key string) (val interface{}, exists bool)
 	Len() int
+	// Put 返回存进去了几个
 	Put(key string, val interface{}) (result int)
 	PutIfAbsent(key string, val interface{}) int
 	PutIfExists(key string, val interface{}) int

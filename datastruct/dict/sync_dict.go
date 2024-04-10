@@ -9,6 +9,7 @@ package dict
 import "sync"
 
 type SyncDict struct {
+	// 并发安全的 map
 	m sync.Map
 }
 
@@ -35,8 +36,10 @@ func (dict *SyncDict) Put(key string, val interface{}) (result int) {
 	_, existed := dict.m.Load(key)
 	dict.m.Store(key, val)
 	if existed {
+		//只是修改没有新加 返回0
 		return 0
 	}
+	// 新增了
 	return 1
 }
 
@@ -52,6 +55,7 @@ func (dict *SyncDict) PutIfAbsent(key string, val interface{}) (result int) {
 func (dict *SyncDict) PutIfExists(key string, val interface{}) (result int) {
 	_, existed := dict.m.Load(key)
 	if existed {
+		// 修改
 		dict.m.Store(key, val)
 		return 1
 	}
@@ -64,8 +68,8 @@ func (dict *SyncDict) Remove(key string) (result int) {
 	if existed {
 		return 1
 	}
+	// 删除没起效
 	return 0
-
 }
 
 func (dict *SyncDict) ForEach(consumer Consumer) {
@@ -79,6 +83,7 @@ func (dict *SyncDict) Keys() []string {
 	result := make([]string, dict.Len())
 	i := 0
 	dict.m.Range(func(key, value interface{}) bool {
+		// interface{} → string
 		result[i] = key.(string)
 		i++
 		return true
@@ -115,6 +120,6 @@ func (dict *SyncDict) RandomDistinctKeys(limit int) []string {
 }
 
 func (dict *SyncDict) Clear() {
-	//换一个新的
+	//换一个新的,系统会自动垃圾回收
 	*dict = *MakeSyncDict()
 }

@@ -9,11 +9,14 @@ package database
 import "strings"
 
 // 支持的 指令表
+// 每个指令对应一个 command 结构体
 var cmdTable = make(map[string]*command)
 
 type command struct {
+	// 对应的执行的方法
 	executor ExecFunc
-	arity    int
+	// 参数的数量
+	arity int
 }
 
 func RegisterCommand(name string, executor ExecFunc, arity int) {

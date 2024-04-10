@@ -35,9 +35,10 @@ type RespHandler struct {
 
 func MakeHandler() *RespHandler {
 	var db databseinterface.Database
-	// 测试解析结果，直接放回解析结果给用户
-	db = database.NewEchoDatabase()
-	//db = database.NewStandaloneDatabase()
+	// 测试解析结果，直接反回解析结果给用户
+	//db = database.NewEchoDatabase()
+	// 单机版的
+	db = database.NewStandaloneDatabase()
 	// 判断是否启动集群版
 	//if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
 	//	db = cluster.MakeClusterDatabase()
@@ -97,8 +98,12 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			continue
 		}
 		// 感觉这边需要判断 data 来反应直接回复客户端还是 需要和 db 打交道
-		// 这边需要扩展~
+		// 这边需要扩展~ PING 还不支持
 		// 和 db 打交到
+		//switch payload.Data.(type) {
+		//case *reply.MultiBulkReply:
+		//
+		//}
 		mReply, ok := payload.Data.(*reply.MultiBulkReply)
 		if !ok {
 			logger.Error("require multi bulk reply to exec")

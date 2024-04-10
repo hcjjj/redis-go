@@ -15,17 +15,17 @@ redis-cli -h 127.0.0.1
 
 ## 实现逻辑
 
-**TCP 服务器的启动：**
+**TCP 服务器：**
 
-main → ListenAndServeWithSignal → ListenAndServer 🔁 → Handle🔁
+main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
-**协议解析器的工作：**
+**协议解析器：**
 
-![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RESP.svg)
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RES1P.svg)
 
 **内存数据库：**
 
-KV 内存数据库的核心是并发安全的哈希表 **sync.map**
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/db.svg)
 
 **持久化流程：**
 
@@ -87,8 +87,28 @@ Redis 网络协议，**[Redis serialization protocol specification](https://redi
   * 以 "*" 开头，后跟成员个数
   * 有3个成员的数组[SET, key, value]：`*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
 
-## 测试命令
+## 支持命令
+
+* PING
+* SELECT
+* Key 命令集
+  * DEL
+  * EXISTS
+  * FlushDB
+  * TYPE
+  * RENAME
+  * RENAMENX
+  * KEYS
+* String 命令集
+  * GET
+  * SET
+  * SETNX
+  * GETSET
+  * STRLEN
+* ...
+
+**测试命令：**
 
 * set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
-* select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
 * get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
+* select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`

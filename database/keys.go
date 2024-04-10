@@ -8,7 +8,6 @@ package database
 
 import (
 	"redis-go/interface/resp"
-	"redis-go/lib/utils"
 	"redis-go/lib/wildcard"
 	"redis-go/resp/reply"
 )
@@ -23,9 +22,9 @@ func execDel(db *DB, args [][]byte) resp.Reply {
 	deleted := db.Removes(keys...)
 
 	// 落盘
-	if deleted > 0 {
-		db.addAof(utils.ToCmdLine2("del", args...))
-	}
+	//if deleted > 0 {
+	//	db.addAof(utils.ToCmdLine2("del", args...))
+	//}
 
 	return reply.MakeIntReply(int64(deleted))
 }
@@ -47,23 +46,26 @@ func execExists(db *DB, args [][]byte) resp.Reply {
 func execFlushDB(db *DB, args [][]byte) resp.Reply {
 	db.Flush()
 
-	db.addAof(utils.ToCmdLine2("flushdb", args...))
+	//db.addAof(utils.ToCmdLine2("flushdb", args...))
 
 	return reply.MakeOkReply()
 }
 
-// TYPE k1
+// TYPE k1 键对应值的类型
+
 func execType(db *DB, args [][]byte) resp.Reply {
+	// 进来的时候没有 type 了 只有 k1 ， 把 k1 取出来
 	key := string(args[0])
 	entity, exists := db.GetEntity(key)
 	if !exists {
+		// +none/r/n
 		reply.MakeStatusReply("none")
 	}
 	switch entity.Data.(type) {
 	case []byte:
 		reply.MakeStatusReply("string")
+		// TODO:
 	}
-	// TODO:
 	return &reply.UnknowErrReply{}
 }
 
@@ -75,10 +77,12 @@ func execRename(db *DB, args [][]byte) resp.Reply {
 	if !exists {
 		reply.MakeErrReply("no such key")
 	}
+	// 放新的
 	db.PutEntity(dest, entity)
+	// 删旧的
 	db.Remove(src)
 
-	db.addAof(utils.ToCmdLine2("rename", args...))
+	//db.addAof(utils.ToCmdLine2("rename", args...))
 
 	return reply.MakeOkReply()
 }
@@ -100,7 +104,7 @@ func execRenamenx(db *DB, args [][]byte) resp.Reply {
 	db.PutEntity(dest, entity)
 	db.Remove(src)
 
-	db.addAof(utils.ToCmdLine2("renamenx", args...))
+	//db.addAof(utils.ToCmdLine2("renamenx", args...))
 
 	return reply.MakeIntReply(1)
 }
@@ -123,7 +127,7 @@ func init() {
 	RegisterCommand("DEL", execDel, -2)
 	RegisterCommand("EXISTS", execExists, -2)
 	// 忽略掉 FULSHDB 后续的一些参数
-	// FLUSHDB a b c
+	// FLUSHDB a b c 忽略掉 a b c
 	RegisterCommand("FlushDB", execFlushDB, -1)
 	// TYPE k1
 	RegisterCommand("TYPE", execType, 2)

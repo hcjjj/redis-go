@@ -282,9 +282,9 @@ func parseSingleLineReply(msg []byte) (resp.Reply, error) {
 	return result, nil
 }
 
-// 解析 *3 $3 后面的内容
-// *3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
-// $4\r\nPING\r\n
+// 解析 *3 $4 后面的内容
+// [*3\r\n]$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
+// [$4\r\n]PING\r\n
 // 情况一：$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
 // 情况二：PING\r\n
 func readBody(msg []byte, state *readState) error {
