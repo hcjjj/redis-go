@@ -21,7 +21,7 @@ main → ListenAndServeWithSignal → ListenAndServer 🔁 → Handle🔁
 
 **协议解析器的工作：**
 
-![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RESP.svg)
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RESP2.svg)
 
 Redis 网络协议，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
 * 正常回复（Redis → Client）
