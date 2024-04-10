@@ -15,19 +15,13 @@ redis-cli -h 127.0.0.1
 
 ## 实现逻辑
 
-### TCP 服务器
+**TCP 服务器的启动：**
 
-基于 net 包开发 TCP 服务器，支持同时处理多个客户端的连接、业务、正常和异常结束等
+main → ListenAndServeWithSignal → ListenAndServer 🔁 → Handle🔁
 
-<img src="https://cdn.jsdelivr.net/gh/hcjjj/blog-img/TCP.png" style="zoom:20%;" />
+**协议解析器的工作：**
 
-### 协议解析器
-
-**解析客户端数据：**
-
-![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/%E6%9C%AA%E5%91%BD%E5%90%8D%E7%BB%98%E5%9B%BE-%E7%AC%AC%202%20%E9%A1%B5.drawio.png)
-
-**封装服务器数据：**
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RESP.svg)
 
 Redis 网络协议，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
 * 正常回复（Redis → Client）

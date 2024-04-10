@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// Connection 代表协议层的一个连接信息
 type Connection struct {
 	// TCP 连接信息
 	conn net.Conn
@@ -36,8 +37,9 @@ func (c *Connection) RemoteAddr() net.Addr {
 
 func (c *Connection) Close() error {
 	// 防止客户端关闭引起服务端的异常
+	// 超时关闭
 	c.waitingReply.WaitWithTimeout(10 * time.Second)
-	c.conn.Close()
+	_ = c.conn.Close()
 	return nil
 }
 
@@ -46,12 +48,16 @@ func (c *Connection) Write(bytes []byte) error {
 	if len(bytes) == 0 {
 		return nil
 	}
+	// 加锁 同一时刻只能有一个协程给客户端写数据
 	c.mu.Lock()
+
 	c.waitingReply.Add(1)
 	defer func() {
 		c.waitingReply.Done()
 		c.mu.Unlock()
 	}()
+
+	// 回写数据
 	_, err := c.conn.Write(bytes)
 	return err
 }

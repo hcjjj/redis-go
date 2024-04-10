@@ -10,8 +10,6 @@ import (
 	"context"
 	"io"
 	"net"
-	"redis-go/cluster"
-	"redis-go/config"
 	"redis-go/database"
 	databseinterface "redis-go/interface/database"
 	"redis-go/lib/logger"
@@ -28,21 +26,24 @@ var (
 )
 
 type RespHandler struct {
+	// 记录协议层保持连接的用户信息
 	activeConn sync.Map
 	db         databseinterface.Database
-	closing    atomic.Boolean
+	// 并发安全的 bool
+	closing atomic.Boolean
 }
 
 func MakeHandler() *RespHandler {
 	var db databseinterface.Database
-	//db = database.NewEchoDatabase()
+	// 测试解析结果，直接放回解析结果给用户
+	db = database.NewEchoDatabase()
 	//db = database.NewStandaloneDatabase()
 	// 判断是否启动集群版
-	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
-		db = cluster.MakeClusterDatabase()
-	} else {
-		db = database.NewStandaloneDatabase()
-	}
+	//if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+	//	db = cluster.MakeClusterDatabase()
+	//} else {
+	//	db = database.NewStandaloneDatabase()
+	//}
 	return &RespHandler{
 		db: db,
 	}
@@ -50,8 +51,11 @@ func MakeHandler() *RespHandler {
 
 // 关闭一个客户端的连接
 func (r *RespHandler) closeClient(client *connection.Connection) {
+	// 关闭客户端
 	_ = client.Close()
+	// 客户端关闭后数据库需要做的一些善后操作
 	r.db.AfterClientClose(client)
+	// 移除服务的客户端信息
 	r.activeConn.Delete(client)
 }
 
@@ -60,7 +64,9 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 	if r.closing.Get() {
 		_ = conn.Close()
 	}
+	// TCP 的 连接包装为 协议层的连接
 	client := connection.NewConn(conn)
+	// k 是 client  v 是空接口体  map → set
 	r.activeConn.Store(client, struct{}{})
 	ch := parser.ParseStream(conn)
 	// 监听管道
@@ -77,6 +83,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			}
 			// protocol error
 			errReply := reply.MakeErrReply(payload.Err.Error())
+			// 将协议错误回写给客户端
 			err := client.Write(errReply.ToBytes())
 			if err != nil {
 				r.closeClient(client)
@@ -89,13 +96,18 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 		if payload.Data == nil {
 			continue
 		}
+		// 感觉这边需要判断 data 来反应直接回复客户端还是 需要和 db 打交道
+		// 这边需要扩展~
+		// 和 db 打交到
 		mReply, ok := payload.Data.(*reply.MultiBulkReply)
 		if !ok {
-			logger.Error("require multi bulk reply")
+			logger.Error("require multi bulk reply to exec")
 			continue
 		}
 		result := r.db.Exec(client, mReply.Args)
 		if result != nil {
+			// 返回执行结果给客户端
+			// ToBytes 结果再编码为 RESP 格式
 			_ = client.Write(result.ToBytes())
 		} else {
 			_ = client.Write(unknownErrReplyBytes)
@@ -105,8 +117,9 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 
 // Close 关闭整个 handler
 func (r *RespHandler) Close() error {
-	logger.Info("handler shutting down")
+	logger.Info("handler shutting down ...")
 	r.closing.Set(true)
+	// 逐步断开每个客户端的连接
 	r.activeConn.Range(
 		func(key interface{}, value interface{}) bool {
 			client := key.(*connection.Connection)
