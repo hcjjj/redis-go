@@ -16,10 +16,11 @@ import (
 	"strconv"
 )
 
+// 获取一个 peer 的连接
 func (cluster *ClusterDatabase) getPeerClient(peer string) (*client.Client, error) {
 	pool, ok := cluster.peerConnection[peer]
 	if !ok {
-		return nil, errors.New("connection not found")
+		return nil, errors.New(peer + "connection not found")
 	}
 	object, err := pool.BorrowObject(context.Background())
 	if err != nil {
@@ -32,6 +33,7 @@ func (cluster *ClusterDatabase) getPeerClient(peer string) (*client.Client, erro
 	return c, err
 }
 
+// 返回连接
 func (cluster *ClusterDatabase) returnPeerClient(peer string, peerClient *client.Client) error {
 	pool, ok := cluster.peerConnection[peer]
 	if !ok {
@@ -50,6 +52,7 @@ func (cluster *ClusterDatabase) relay(peer string, c resp.Connection, args [][]b
 		return reply.MakeErrReply(err.Error())
 	}
 	defer func() {
+		// 避免连接耗尽
 		_ = cluster.returnPeerClient(peer, peerClient)
 	}()
 	// 先切库 再发送具体指令

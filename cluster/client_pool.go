@@ -15,24 +15,27 @@ import (
 )
 
 type connectionFactory struct {
-	// 保存连接节点的地址
+	// 保存所连接节点的地址
 	Peer string
 }
 
 func (f connectionFactory) MakeObject(ctx context.Context) (*pool.PooledObject, error) {
+	// 建立连接
 	c, err := client.MakeClient(f.Peer)
 	if err != nil {
 		return nil, err
 	}
 	c.Start()
+	// 丢到池子里面
 	return pool.NewPooledObject(c), nil
 }
 
 func (f connectionFactory) DestroyObject(ctx context.Context, object *pool.PooledObject) error {
 	c, ok := object.Object.(*client.Client)
 	if !ok {
-		return errors.New("type mismatch")
+		return errors.New("池化对象 type mismatch")
 	}
+	// 关闭连接
 	c.Close()
 	return nil
 }

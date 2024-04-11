@@ -31,6 +31,7 @@ func makeRouter() map[string]CmdFunc {
 // GET Key
 // SET k1 v1
 func defaultFunc(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply {
+	// 根据数据的 key 来选择要执行的节点
 	key := string(cmdArgs[1])
 	// peer 是节点的地址
 	peer := cluster.peerPicker.PickNode(key)

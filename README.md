@@ -5,12 +5,12 @@
 **编译运行：**
 
 ```shell
-# 单机版
-go build main.go && ./main
-# 客户端 telnet 或 redis-cli
+# redis.conf 设置服务器信息、数据库核心数、aof 持久化相关、集群相关
+# 配置 peer 信息既开启集群模式，每个节点需要分别设置好各自配置文件的 self 和 peers
+go build && ./redis-go
+# 客户端 telnet 或者 网络调试助手，开启转义符指令解析
+# https://www.cmsoft.cn/assistcenter/help/assistscript/
 telnet 127.0.0.1 6379
-redis-cli -h 127.0.0.1
-# 集群版
 ```
 
 ## 实现逻辑
@@ -21,7 +21,7 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
 **协议解析器：**
 
-![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/RES1P.svg)
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/resp.svg)
 
 **内存数据库：**
 
@@ -31,15 +31,21 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
 ![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/AOF.svg)
 
-**集群设计：**
+**集群架构：**
 
 单台服务器的CPU和内存等资源是有限的，利用多台机器建立分布式系统，分工处理来提高系统容量和吞吐量
+
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/cluster.svg)
+
+**集群指令执行流程：**
+
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/cluster0.svg)
 
 ## 目录结构
 
 ```shell
 ├── aof # AOF 持久化
-├── cluster # 集群
+├── cluster # 集群层
 ├── config # 解析配置文件 redis.conf
 ├── database # 内存数据库
 ├── datastruct # 支持的数据结构
@@ -57,7 +63,7 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 │   ├── utils # 格式转换
 │   └── wildcard # 通配符
 ├── resp # RESP 解析
-│   ├── client
+│   ├── client # 客户端
 │   ├── connection
 │   ├── handler
 │   ├── parser # 解析客户端发来的数据
@@ -107,9 +113,15 @@ Redis 网络协议，**[Redis serialization protocol specification](https://redi
   * STRLEN
 * ...
 
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/20240411200044.png)
+
 **测试命令：**
 
+* ping `$4\r\nping\r\n`
 * set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
+* set ke1 value `*3\r\n$3\r\nSET\r\n$3\r\nke1\r\n$5\r\nvalue\r\n`
 * select 1 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
 * get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
 * select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
+
+> telnet 需要逐条发送如 $4↩︎ping↩︎

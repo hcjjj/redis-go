@@ -38,6 +38,8 @@ func main() {
 	if fileExists(configFile) {
 		config.SetupConfig(configFile)
 	} else {
+		// 如果没有配置文件
+		// 这样子就是单机模式了
 		config.Properties = defaultProperties
 	}
 	logger.Info(fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port))

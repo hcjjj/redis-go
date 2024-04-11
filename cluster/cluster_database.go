@@ -38,26 +38,31 @@ type ClusterDatabase struct {
 func MakeClusterDatabase() *ClusterDatabase {
 	// 一堆的初始化工作
 	cluster := &ClusterDatabase{
-		self:           config.Properties.Self,
-		db:             database2.NewStandaloneDatabase(),
-		peerPicker:     consistenthash.NewNodeMap(nil),
+		self:       config.Properties.Self,
+		db:         database2.NewStandaloneDatabase(),
+		peerPicker: consistenthash.NewNodeMap(nil),
+		// key是peer节点的地址
 		peerConnection: make(map[string]*pool.ObjectPool),
 	}
+	// 初始化 nodes， self + peers
 	nodes := make([]string, 0, len(config.Properties.Peers)+1)
+	// IP:PORT 作为 哈希的 key
 	for _, peer := range config.Properties.Peers {
 		nodes = append(nodes, peer)
 	}
 	nodes = append(nodes, config.Properties.Self)
+	// 将节点加入一致性哈希的环
 	cluster.peerPicker.AddNode(nodes...)
+	// 初始化连接池 self 到每一个 peer
 	ctx := context.Background()
 	for _, peer := range config.Properties.Peers {
 		cluster.peerConnection[peer] = pool.NewObjectPoolWithDefaultConfig(ctx, &connectionFactory{
 			Peer: peer,
 		})
 	}
+	// 写到结构体的字段里面
 	cluster.nodes = nodes
 	return cluster
-
 }
 
 type CmdFunc func(cluster *ClusterDatabase, c resp.Connection, cmdArgs [][]byte) resp.Reply
@@ -77,10 +82,11 @@ func (cluster *ClusterDatabase) Exec(client resp.Connection, args [][]byte) (res
 	cmdName := strings.ToLower(string(args[0]))
 	cmdFunc, ok := router[cmdName]
 	if !ok {
-		reply.MakeErrReply("not supported cmd")
+		reply.MakeErrReply(" cluster mode not supported cmd" + cmdName)
 	}
 	result = cmdFunc(cluster, client, args)
-	return result
+	//return result
+	return
 }
 
 func (cluster *ClusterDatabase) Close() {

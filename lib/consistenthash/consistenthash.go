@@ -14,10 +14,12 @@ import (
 type HashFunc func(data []byte) uint32
 
 type NodeMap struct {
+	// 使用什么哈希函数
 	hashFunc HashFunc
 	// 各个节点的哈希值，需要排序所以用int
 	// uint32 存入 int 在32位的机器上可能会溢出，64位的机器不会
-	nodeHashs   []int
+	nodeHashs []int
+	// 根据哈希值找到对应节点
 	nodehashMap map[int]string
 }
 
@@ -48,7 +50,7 @@ func (m *NodeMap) AddNode(keys ...string) {
 		// key: hash  val: string 的 key
 		m.nodehashMap[hash] = key
 	}
-	// 没增加一个节点都需要排序一下
+	// 每增加一个节点都需要排序一下
 	sort.Ints(m.nodeHashs)
 }
 
@@ -66,6 +68,6 @@ func (m *NodeMap) PickNode(key string) string {
 	if idx == len(m.nodeHashs) {
 		idx = 0
 	}
-	// 根据下标找到节点的hash值，在根据map找到对应的节点
+	// 根据下标找到节点的hash值，在根据map找到对应的节点名称
 	return m.nodehashMap[m.nodeHashs[idx]]
 }

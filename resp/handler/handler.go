@@ -10,8 +10,10 @@ import (
 	"context"
 	"io"
 	"net"
+	"redis-go/cluster"
 	"redis-go/database"
 	databseinterface "redis-go/interface/database"
+	"redis-go/lib/config"
 	"redis-go/lib/logger"
 	"redis-go/lib/sync/atomic"
 	"redis-go/resp/connection"
@@ -40,11 +42,11 @@ func MakeHandler() *RespHandler {
 	// 单机版的
 	db = database.NewStandaloneDatabase()
 	// 判断是否启动集群版
-	//if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
-	//	db = cluster.MakeClusterDatabase()
-	//} else {
-	//	db = database.NewStandaloneDatabase()
-	//}
+	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+		db = cluster.MakeClusterDatabase()
+	} else {
+		db = database.NewStandaloneDatabase()
+	}
 	return &RespHandler{
 		db: db,
 	}
