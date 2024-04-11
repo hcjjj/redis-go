@@ -71,7 +71,7 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
 ## RESP 协议
 
-Redis 网络协议，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
+Redis序列化协议规范，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
 
 * 正常回复（Redis → Client）
   * 以 "+" 开头，以 "\r\n" 结尾的字符串形式
