@@ -8,6 +8,7 @@ package database
 
 import (
 	"redis-go/interface/resp"
+	"redis-go/lib/utils"
 	"redis-go/lib/wildcard"
 	"redis-go/resp/reply"
 )
@@ -22,9 +23,10 @@ func execDel(db *DB, args [][]byte) resp.Reply {
 	deleted := db.Removes(keys...)
 
 	// 落盘
-	//if deleted > 0 {
-	//	db.addAof(utils.ToCmdLine2("del", args...))
-	//}
+	if deleted > 0 {
+		// 恢复 指令 + 后续的参数，因为到这边指令 del 被切掉了
+		db.addAof(utils.ToCmdLine2("del", args...))
+	}
 
 	return reply.MakeIntReply(int64(deleted))
 }
@@ -46,7 +48,7 @@ func execExists(db *DB, args [][]byte) resp.Reply {
 func execFlushDB(db *DB, args [][]byte) resp.Reply {
 	db.Flush()
 
-	//db.addAof(utils.ToCmdLine2("flushdb", args...))
+	db.addAof(utils.ToCmdLine2("flushdb", args...))
 
 	return reply.MakeOkReply()
 }
@@ -82,7 +84,7 @@ func execRename(db *DB, args [][]byte) resp.Reply {
 	// 删旧的
 	db.Remove(src)
 
-	//db.addAof(utils.ToCmdLine2("rename", args...))
+	db.addAof(utils.ToCmdLine2("rename", args...))
 
 	return reply.MakeOkReply()
 }
@@ -104,7 +106,7 @@ func execRenamenx(db *DB, args [][]byte) resp.Reply {
 	db.PutEntity(dest, entity)
 	db.Remove(src)
 
-	//db.addAof(utils.ToCmdLine2("renamenx", args...))
+	db.addAof(utils.ToCmdLine2("renamenx", args...))
 
 	return reply.MakeIntReply(1)
 }

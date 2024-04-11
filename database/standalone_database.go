@@ -7,6 +7,7 @@
 package database
 
 import (
+	"redis-go/aof"
 	"redis-go/interface/resp"
 	"redis-go/lib/config"
 	"redis-go/lib/logger"
@@ -17,8 +18,8 @@ import (
 
 type StandaloneDatabase struct {
 	// 一组DB的指针
-	dbSet []*DB
-	//aofHandler *aof.AofHandler
+	dbSet      []*DB
+	aofHandler *aof.AofHandler
 }
 
 // NewStandaloneDatabase 创建 Redis 数据库的核心 默认为16个分数据库
@@ -34,33 +35,38 @@ func NewStandaloneDatabase() *StandaloneDatabase {
 		db.index = i
 		database.dbSet[i] = db
 	}
-	// 初始化 aofHandler
-	//if config.Properties.AppendOnly {
-	//	// 这边传递的是 database 指针
-	//	// 因为 database 实现的接口的方式是通过结构体指针（指针接收者）
-	//	aofHandler, err := aof.NewAofHandler(database)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	database.aofHandler = aofHandler
-	//	// 初始化 db 中的 addAof 方法
-	//	for _, db := range database.dbSet {
-	//		// db 的值会变但是地址不会变
-	//		// 这边是一个闭包 导致 db.index 写死了为 dbSet[15] 的 15
-	//		// db 引用了 外面 for 的局部变量 db，其逃逸到堆上了
-	//		// db = dbSet[0]
-	//		// db = dbSet[1]
-	//		// ...
-	//		//db.addAof = func(line CmdLine) {
-	//		//	database.aofHandler.AddAof(db.index, line)
-	//		//}
-	//		// sdb 的值和地址都会变
-	//		sdb := db
-	//		sdb.addAof = func(line CmdLine) {
-	//			database.aofHandler.AddAof(sdb.index, line)
-	//		}
-	//	}
-	//}
+	// 初始化 aofHandler 先查看有没有开启这个功能
+	if config.Properties.AppendOnly {
+		// 这边传递的是 database 指针
+		// 因为 database 实现的接口的方式是通过结构体指针（指针接收者）
+		// new 的时候就会恢复数据了
+		aofHandler, err := aof.NewAofHandler(database)
+		if err != nil {
+			panic(err)
+			logger.Error("AOF启动失败")
+		}
+		database.aofHandler = aofHandler
+		// 初始化 db 中的 addAof 方法
+		for _, db := range database.dbSet {
+			// db 的值会变但是地址不会变
+			// 这边是一个闭包 导致 db.index 写死了为 dbSet[15] 的 15
+			// db 引用了 外面 for 的局部变量 db，其逃逸到堆上了
+			// db = dbSet[0]
+			// db = dbSet[1]
+			// ...
+			// 外面的 db 是 0-15，闭包里面的 db 都是 15
+			//db.addAof = func(line CmdLine) {
+			//	// 这个 db.index 都是15
+			//	fmt.Println(db.index)
+			//	database.aofHandler.AddAof(db.index, line)
+			//}
+			// sdb 的值和地址都会变
+			sdb := db
+			sdb.addAof = func(line CmdLine) {
+				database.aofHandler.AddAof(sdb.index, line)
+			}
+		}
+	}
 
 	return database
 }

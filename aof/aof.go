@@ -47,13 +47,13 @@ func NewAofHandler(db database.Database) (*AofHandler, error) {
 	handler.database = db
 	//加载已有的数据
 	handler.LoadAof()
-	// 打开后就一直要用的
+	// 打开后就一直要用的，所以不需要 defer 关闭
 	aofFile, err := os.OpenFile(handler.aofFilename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600) //读写方式打开文件
 	if err != nil {
 		return nil, err
 	}
 	handler.aofFile = aofFile
-	// channel缓冲
+	// channel缓冲，缓冲区大小为 aofQueueSize
 	handler.aofChan = make(chan *payload, aofQueueSize)
 	// 异步的
 	go func() {
@@ -101,16 +101,18 @@ func (handler *AofHandler) handleAof() {
 
 // LoadAof read aof file
 func (handler *AofHandler) LoadAof() {
-	logger.Info("LoadAof read aof file: " + handler.aofFilename)
+	logger.Info("LoadAof: read aof file: " + handler.aofFilename)
 	// 打开文件 只读方式打开文件
 	file, err := os.Open(handler.aofFilename)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
+	// 恢复数据的时候只打开一次就关闭
 	defer file.Close()
 	// file 实现了 reader 接口
 	ch := parser.ParseStream(file)
+	// 这边 selectDB 就初始化为 0 了
 	fakeConn := &connection.Connection{}
 	for p := range ch {
 		if p.Err != nil {
@@ -129,7 +131,6 @@ func (handler *AofHandler) LoadAof() {
 		r, ok := p.Data.(*reply.MultiBulkReply)
 		if !ok {
 			logger.Error("need multi bulk")
-
 		}
 		rep := handler.database.Exec(fakeConn, r.Args)
 		if reply.IsErrReply(rep) {

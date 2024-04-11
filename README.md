@@ -29,7 +29,7 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
 **持久化流程：**
 
-AOF 持久化是典型的异步任务，主协程 (goroutine) 可以使用 channel 将数据发送到异步协程由异步协程执行持久化操作
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/AOF.svg)
 
 **集群设计：**
 
@@ -110,5 +110,6 @@ Redis 网络协议，**[Redis serialization protocol specification](https://redi
 **测试命令：**
 
 * set key value `*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
+* select 1 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
 * get key `*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n`
 * select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
