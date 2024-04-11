@@ -33,8 +33,6 @@ main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
 
 **集群架构：**
 
-单台服务器的CPU和内存等资源是有限的，利用多台机器建立分布式系统，分工处理来提高系统容量和吞吐量
-
 ![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/cluster.svg)
 
 **集群指令执行流程：**
