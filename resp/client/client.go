@@ -78,8 +78,9 @@ func (client *Client) Close() {
 	// wait stop process
 	client.working.Wait()
 
-	// clean
+	// 关闭与服务端的连接，连接关闭后读协程会退出
 	_ = client.conn.Close()
+	// 关闭队列
 	close(client.waitingReqs)
 }
 
@@ -121,6 +122,7 @@ func (client *Client) heartbeat() {
 	}
 }
 
+// 写协程入口
 func (client *Client) handleWrite() {
 	for req := range client.pendingReqs {
 		client.doRequest(req)
@@ -137,7 +139,9 @@ func (client *Client) Send(args [][]byte) resp.Reply {
 	request.waiting.Add(1)
 	client.working.Add(1)
 	defer client.working.Done()
+	// 请求入队
 	client.pendingReqs <- request
+	// 等待响应或者超时
 	timeout := request.waiting.WaitWithTimeout(maxWait)
 	if timeout {
 		return reply.MakeErrReply("server time out")
@@ -161,13 +165,16 @@ func (client *Client) doHeartbeat() {
 	request.waiting.WaitWithTimeout(maxWait)
 }
 
+// 发送请求
 func (client *Client) doRequest(req *request) {
 	if req == nil || len(req.args) == 0 {
 		return
 	}
+	// 序列化请求
 	re := reply.MakeMultiBulkReply(req.args)
 	bytes := re.ToBytes()
 	var err error
+	// 失败重试
 	for i := 0; i < 3; i++ { // only retry, waiting for handleRead
 		_, err = client.conn.Write(bytes)
 		if err == nil ||
@@ -177,6 +184,7 @@ func (client *Client) doRequest(req *request) {
 		}
 	}
 	if err == nil {
+		// 发送成功等待服务器响应
 		client.waitingReqs <- req
 	} else {
 		req.err = err
@@ -184,6 +192,19 @@ func (client *Client) doRequest(req *request) {
 	}
 }
 
+// 读协程是个 RESP 协议解析器
+func (client *Client) handleRead() {
+	ch := parser.ParseStream(client.conn)
+	for payload := range ch {
+		if payload.Err != nil {
+			client.reconnect()
+			return
+		}
+		client.finishRequest(payload.Data)
+	}
+}
+
+// 收到服务端的响应
 func (client *Client) finishRequest(reply resp.Reply) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -198,16 +219,5 @@ func (client *Client) finishRequest(reply resp.Reply) {
 	request.reply = reply
 	if request.waiting != nil {
 		request.waiting.Done()
-	}
-}
-
-func (client *Client) handleRead() {
-	ch := parser.ParseStream(client.conn)
-	for payload := range ch {
-		if payload.Err != nil {
-			client.reconnect()
-			return
-		}
-		client.finishRequest(payload.Data)
 	}
 }
