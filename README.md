@@ -13,11 +13,17 @@ go build && ./redis-go
 telnet 127.0.0.1 6379
 ```
 
+> **[Rdis 原理整理](https://github.com/hcjjj/redis-go/blob/master/docs/redis.md)**
+
 ## 实现逻辑
 
 **TCP 服务器：**
 
-main → ListenAndServeWithSignal → ListenAndServer🔁 → Handle🔁
+```mermaid
+graph LR
+    main --> ListenAndServeWithSignal[ListenAndServeWithSignal] --> ListenAndServer[ListenAndServer 🔁] --> Handle[Handle 🔁]
+
+```
 
 **协议解析器：**
 
@@ -123,5 +129,3 @@ Redis序列化协议规范，**[Redis serialization protocol specification](http
 * select 2 `*2\r\n$6\r\nselect\r\n$1\r\n1\r\n`
 
 > telnet 需要逐条发送如 $4↩︎ping↩︎
-
-## [相关文档](https://github.com/hcjjj/redis-go/blob/master/docs/redis.md)

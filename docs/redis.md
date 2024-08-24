@@ -64,3 +64,14 @@ graph TD
 
 ## 数据类型
 
+* 字符串 Simple Dynamic Strings
+* 列表
+* 哈希表
+* 集合
+* 有序集合
+
+# 参考资料
+
+* **[Redis 仓库](https://github.com/redis/redis)**
+* **[Redis 官网](https://redis.io/)**
+* **[Redis 核心技术与实战](https://time.geekbang.org/column/intro/100056701)**
