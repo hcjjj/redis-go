@@ -13,7 +13,7 @@ go build && ./redis-go
 telnet 127.0.0.1 6379
 ```
 
-> **[Redis 原理整理](https://github.com/hcjjj/redis-go/blob/master/docs/redis.md)**
+> **[Redis 知识体系整理](http://localhost:4000/2024/08/22/redis/)**
 
 ## 实现逻辑
 
