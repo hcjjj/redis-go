@@ -1,6 +1,6 @@
 ## 项目介绍
 
-使用 Go 语言基于 Redis serialization protocol (RESP) 实现简易的 Redis，主要工作：TCP 服务器、协议解析器、内存数据库、持久化、集群
+使用 Golang 基于 RESP （Redis serialization protocol） 实现的简易 Redis，主要包括 TCP 服务器、协议解析器、内存数据库、持久化和切集群
 
 **编译运行：**
 
@@ -13,21 +13,17 @@ go build && ./redis-go
 telnet 127.0.0.1 6379
 ```
 
-> **[Redis 知识体系整理](http://localhost:4000/2024/08/22/redis/)**
+> **[Redis 知识体系整理](https://hcjjj.github.io/2024/05/22/redis/)**
 
 ## 实现逻辑
 
 **TCP 服务器：**
 
-```mermaid
-graph LR
-    main --> ListenAndServeWithSignal[ListenAndServeWithSignal] --> ListenAndServer[ListenAndServer 🔁] --> Handle[Handle 🔁]
-
-```
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/tcp.svg)
 
 **协议解析器：**
 
-![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/resp.svg)
+![](https://cdn.jsdelivr.net/gh/hcjjj/blog-img/resp3.svg)
 
 **内存数据库：**
 
@@ -77,7 +73,7 @@ graph LR
 
 ## RESP 协议
 
-Redis序列化协议规范，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
+Redis 序列化协议规范，**[Redis serialization protocol specification](https://redis.io/docs/reference/protocol-spec/)**
 
 * 正常回复（Redis → Client）
   * 以 "+" 开头，以 "\r\n" 结尾的字符串形式
@@ -89,13 +85,13 @@ Redis序列化协议规范，**[Redis serialization protocol specification](http
   * 以 ":" 开头，以 "\r\n" 结尾的字符串形式
   * 如：`:123456\r\n`
 * 单行字符串（Redis ⇄ Client）
-  * 以 "$" 开头，后跟实际发送字节数，以 "\r\n" 结尾
+  * 以 "$" 开头，后跟实际发送字节数，以 "\r\n " 结尾
   * "Redis"：`$5\r\nRedis\r\n`
   * ""：`$0\r\n\r\n`
   * "Redis\r\ngo"：`$11\r\nRedis\r\ngo\r\n`
 * 多行字符串（数组）（Redis ⇄ Client）
   * 以 "*" 开头，后跟成员个数
-  * 有3个成员的数组[SET, key, value]：`*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
+  * 有 3 个成员的数组 [SET, key, value]：`*3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n`
 
 ## 支持命令
 

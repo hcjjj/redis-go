@@ -32,14 +32,14 @@ func (e *EchoClient) Close() error {
 }
 
 type EchoHandler struct {
-	// 记录有多个连接
+	// 记录有多少个连接
 	activeConn sync.Map
 	// × closing boll 防止并发问题
 	// 原子的 bool
 	closing atomic.Boolean
 }
 
-func MakeHandler() *EchoHandler {
+func MakeEchoHandler() *EchoHandler {
 	return &EchoHandler{}
 }
 
@@ -77,9 +77,9 @@ func (handler *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 }
 
 func (handler *EchoHandler) Close() error {
-	logger.Info("handler shutting down")
+	logger.Info("EchoHandler shutting down ...")
 	handler.closing.Set(true)
-	// sync 包下的 map 不一样
+	// sync 包下 map 的遍历方式
 	handler.activeConn.Range(func(key, value interface{}) bool {
 		// 将空接口转换为 EchoClient
 		client := key.(*EchoClient)

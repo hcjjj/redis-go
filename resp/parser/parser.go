@@ -59,6 +59,9 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 			logger.Error(string(debug.Stack()))
 		}
 	}()
+	//io.Reader 是一个通用的读取数据的接口
+	//net.Conn 是网络连接的接口，实现了 io.Reader 和 io.Writer 接口
+	//bufio.Reader 是一个实现了 io.Reader 接口的带缓冲的读取器
 	bufReader := bufio.NewReader(reader)
 	// 解析器状态
 	var state readState

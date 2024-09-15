@@ -22,6 +22,8 @@ type Config struct {
 	Address string
 }
 
+var ClientCounter int32
+
 func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 	closeChan := make(chan struct{})
 	// 获取操作系统给程序发送的信号
@@ -51,11 +53,11 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 			"  |_|  \\___|\\__,_|_|___/      \\__, |\\___/ \n" +
 			"                               __/ |      \n" +
 			"                              |___/       \n")
-	ListenAndServer(listener, handler, closeChan)
+	ListenAndServe(listener, handler, closeChan)
 	return nil
 }
 
-func ListenAndServer(listener net.Listener, handler tcp.Handler, closeChan <-chan struct{}) {
+func ListenAndServe(listener net.Listener, handler tcp.Handler, closeChan <-chan struct{}) {
 	// 监听应用程序被关闭的系统信号
 	go func() {
 		<-closeChan
@@ -70,18 +72,20 @@ func ListenAndServer(listener net.Listener, handler tcp.Handler, closeChan <-cha
 	}()
 	ctx := context.Background()
 	var waitDone sync.WaitGroup
-	for true {
+	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			break
 		}
 		logger.Info("Accepted link: " + conn.RemoteAddr().String())
 		waitDone.Add(1)
+		// 一个协程处理一个连接
 		go func() {
 			// 防止连接出现 panic 导致没 Done()
 			defer func() {
 				waitDone.Done()
 			}()
+			// 这个 Handle 也是一直在 for 的
 			handler.Handle(ctx, conn)
 		}()
 	}

@@ -44,11 +44,12 @@ func main() {
 	}
 	logger.Info(fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port))
 	// 业务
-	err := tcp.ListenAndServeWithSignal(&tcp.Config{
-		// IP:PORT
-		Address: fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port),
-	},
-		//tcp.MakeHandler())
+	err := tcp.ListenAndServeWithSignal(
+		&tcp.Config{
+			// IP:PORT
+			Address: fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port),
+		},
+		//tcp.MakeEchoHandler())
 		handler.MakeHandler())
 	if err != nil {
 		logger.Error(err)
