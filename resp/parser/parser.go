@@ -8,6 +8,7 @@ package parser
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"redis-go/interface/resp"
@@ -37,8 +38,8 @@ type readState struct {
 	bulkLen int64
 }
 
-// finished 判断是否解析结束
-func (s *readState) finished() bool {
+// isFinished 判断是否解析结束
+func (s *readState) isFinished() bool {
 	// 已解析参数和预期参数数量一致了
 	return s.expectedArgsCount > 0 && len(s.args) == s.expectedArgsCount
 }
@@ -51,8 +52,23 @@ func ParseStream(reader io.Reader) <-chan *Payload {
 	return ch
 }
 
+// ParseOne reads data from []byte and return the first payload
+func ParseOne(data []byte) (resp.Reply, error) {
+	ch := make(chan *Payload)
+	reader := bytes.NewReader(data)
+	go parse0(reader, ch)
+	payload := <-ch // parse0 will close the channel
+	if payload == nil {
+		return nil, errors.New("no protocol")
+	}
+	return payload.Data, payload.Err
+}
+
 // parse0 解析器
 func parse0(reader io.Reader, ch chan<- *Payload) {
+	// 从 reader 里面读取 socket 的二进制数据流，解析后发送到通道
+	// 单行: StatusReply, IntReply, ErrorReply
+	// 多行: BulkReply, MultiBulkReply
 	// 防止出现异常 循环中断
 	defer func() {
 		if err := recover(); err != nil {
@@ -67,7 +83,7 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 	var state readState
 	var err error
 	var msg []byte
-	for true {
+	for {
 		var ioErr bool
 		msg, ioErr, err = readLine(bufReader, &state)
 		if err != nil {
@@ -96,6 +112,7 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 		if !state.readingMultiLine {
 			//fmt.Printf("%s", string(msg))
 			// *3/r/n
+			// 需要开启多行解析模式
 			if msg[0] == '*' { //*3
 				err := parseMultiBulkHeader(msg, &state)
 				if err != nil {
@@ -116,6 +133,7 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 				}
 				// $4\r\nPING\r\n
 			} else if msg[0] == '$' {
+				// 也是多行模式（但是只有单行字符串）
 				err := parseBulkHeader(msg, &state)
 				if err != nil {
 					ch <- &Payload{
@@ -152,12 +170,14 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 				state = readState{}
 				continue
 			}
-			// 解析完成
-			if state.finished() {
+			// 解析完一整个命令才往 ch 里面发
+			if state.isFinished() {
 				var result resp.Reply
 				if state.msgType == '*' {
+					// 字符串数组
 					result = reply.MakeMultiBulkReply(state.args)
 				} else if state.msgType == '$' {
+					// 单行字符串
 					result = reply.MakeBulkReply(state.args[0])
 				}
 				ch <- &Payload{
@@ -171,7 +191,7 @@ func parse0(reader io.Reader, ch chan<- *Payload) {
 	}
 }
 
-// readLine 分割行
+// readLine 读一行或者读取特定的长度的 msg
 func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 	// *3\r\n$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n 表示数组 [SET, key, value]
 	// msg 表示读取的一行内容
@@ -181,6 +201,7 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 	// 1. \r\n 切分
 	// 没有预设的长度
 	if state.bulkLen == 0 {
+		// 保证每次读取到完整的一行
 		// xxxx\r\n
 		msg, err = bufReader.ReadBytes('\n')
 		if err != nil {
@@ -196,6 +217,7 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 		// len("\r\n") == 2
 		msg = make([]byte, state.bulkLen+2)
 		// 塞满msg，截至特定字节数量
+		// 读取指定长度的内容
 		_, err := io.ReadFull(bufReader, msg)
 		if err != nil {
 			// 出现io错误
@@ -215,6 +237,7 @@ func readLine(bufReader *bufio.Reader, state *readState) ([]byte, bool, error) {
 // 3 SET key value
 // *2\r\n$6\r\nselect\r\n$1\r\n1\r\n
 // select 1
+// 解析多行模式的行数并修改解析状态
 func parseMultiBulkHeader(msg []byte, state *readState) error {
 	var err error
 	// 取 * 后面的数字，表示成员个数
@@ -291,6 +314,7 @@ func parseSingleLineReply(msg []byte) (resp.Reply, error) {
 // 情况一：$3\r\nSET\r\n$3\r\nkey\r\n$5\r\nvalue\r\n
 // 情况二：PING\r\n
 func readBody(msg []byte, state *readState) error {
+	// msg 每次都是一行一行处理的
 	// 去掉末尾的 \r\n
 	line := msg[0 : len(msg)-2]
 	var err error

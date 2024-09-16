@@ -8,6 +8,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"redis-go/cluster"
@@ -78,7 +79,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 		if payload.Err != nil {
 			// 客户端关闭
 			if payload.Err == io.EOF ||
-				payload.Err == io.ErrUnexpectedEOF ||
+				errors.Is(payload.Err, io.ErrUnexpectedEOF) ||
 				strings.Contains(payload.Err.Error(), "use of closed network connection") {
 				r.closeClient(client)
 				logger.Info("Connection closed: " + client.RemoteAddr().String())
@@ -99,9 +100,7 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 		if payload.Data == nil {
 			continue
 		}
-		// 感觉这边需要判断 data 来反应直接回复客户端还是 需要和 db 打交道
-		// 这边需要扩展~ PING 还不支持
-		// 和 db 打交到
+		// 判断数据的类型
 		switch payload.Data.(type) {
 		case *reply.MultiBulkReply:
 			result := r.db.Exec(client, payload.Data.(*reply.MultiBulkReply).Args)
@@ -114,20 +113,18 @@ func (r *RespHandler) Handle(ctx context.Context, conn net.Conn) {
 			}
 		case *reply.BulkReply:
 			cmd := payload.Data.(*reply.BulkReply).Arg
-			if strings.ToLower(string(cmd)) == "ping" {
-				args := make([][]byte, 1)
-				args[0] = cmd
-				result := r.db.Exec(client, args)
-				if result != nil {
-					// 返回执行结果给客户端
-					// ToBytes 结果再编码为 RESP 格式
-					_ = client.Write(result.ToBytes())
-				} else {
-					_ = client.Write(unknownErrReplyBytes)
-				}
+			args := make([][]byte, 1)
+			args[0] = cmd
+			result := r.db.Exec(client, args)
+			if result != nil {
+				// 返回执行结果给客户端
+				// ToBytes 结果再编码为 RESP 格式
+				_ = client.Write(result.ToBytes())
+			} else {
+				_ = client.Write(unknownErrReplyBytes)
 			}
 		default:
-			logger.Error("require multi bulk reply to exec")
+			logger.Error("require bulk reply to exec")
 			continue
 		}
 
