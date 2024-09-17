@@ -89,9 +89,9 @@ func (database *StandaloneDatabase) Exec(client resp.Connection, args [][]byte) 
 		return execSelect(client, database, args[1:])
 	}
 	//  require multi bulk reply to exec
-	if cmdName == "ping" {
-		return reply.MakePongReply()
-	}
+	//if cmdName == "ping" {
+	//	return reply.MakePongReply()
+	//}
 
 	dbIndex := client.GetDBIndex()
 	db := database.dbSet[dbIndex]

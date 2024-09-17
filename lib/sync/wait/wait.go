@@ -34,6 +34,7 @@ func (w *Wait) WaitWithTimeout(timeout time.Duration) bool {
 	go func() {
 		defer close(c)
 		w.wg.Wait()
+		// 当 WaitGroup 的任务全部完成后，c <- true 会将 true 发送到 channel c，表示 WaitGroup 已经完成
 		c <- true
 	}()
 	select {

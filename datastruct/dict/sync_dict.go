@@ -74,6 +74,7 @@ func (dict *SyncDict) Remove(key string) (result int) {
 
 func (dict *SyncDict) ForEach(consumer Consumer) {
 	dict.m.Range(func(key, value interface{}) bool {
+		// 如何处理里面的每个 KV
 		consumer(key.(string), value)
 		return true
 	})
